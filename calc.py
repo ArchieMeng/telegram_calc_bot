@@ -1,3 +1,6 @@
+from decimal import *
+
+getcontext().prec = 6 # float calculation precise
 op_weight = {op: i for i, op in enumerate("+-*/^")}
 op_weight['-'] = op_weight['+']
 op_weight['/'] = op_weight['*']
@@ -10,10 +13,7 @@ def parse_word(s: str):
         # parse operator
         if ch in "+-*/()^":
             if num_val:
-                if int_mode:
-                    yield int(num_val)
-                else:
-                    yield float(num_val)
+                yield Decimal(num_val)
                 num_val = ""
                 int_mode = True
             yield ch
@@ -31,10 +31,7 @@ def parse_word(s: str):
         else:
             raise ValueError("{} is not valid".format(ch))
     if num_val:
-        if int_mode:
-            yield int(num_val)
-        else:
-            yield float(num_val)
+        yield Decimal(num_val)
 
 
 def do_operate(a, b, op):
@@ -55,7 +52,7 @@ def calc(command: str):
         return None
     val_stack, op_stack = [], []
     for v in parse_word(command):
-        if isinstance(v, (int, float)):
+        if isinstance(v, Decimal):
             val_stack.append(v)
         elif v in op_weight:
             while op_stack and op_stack[-1] != '(' and op_weight[v] <= op_weight[op_stack[-1]]:
@@ -99,6 +96,9 @@ if __name__ == "__main__":
     print(calc("2^4/2"))
     print(calc("2^(4/2)"))
     print(calc("0.26*(80*24/10^3)"))
+    for d in range(5, 100, 5):
+        formulation = "0.{}*9".format(d)
+        print(formulation, '=', calc(formulation))
 
     from time import time
 
