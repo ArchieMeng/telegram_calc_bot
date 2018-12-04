@@ -39,11 +39,32 @@ def set_command_handler(
     return decorate
 
 
-def calculate_impl(formula, result: Value):
+def calculate_impl(formula, result: Value, error: Value):
     try:
         result.value = str(calc(formula))
     except Exception as e:
         result.value = e.args[0]
+        error.value = True
+
+
+def get_result(formula):
+    with Manager() as manager:
+        result = manager.Value('s', " ")
+        error = manager.Value('b', False)
+        process = Process(target=calculate_impl, args=(formula, result, error))
+        process.start()
+        process.join(0.5)
+        if process.is_alive():
+            process.terminate()
+            result = "Time limit exceeded"
+            title = result
+        else:
+            title = "result"
+            if error.value:
+                result = result.value
+            else:
+                result = formula + '=' + result.value
+    return result, title
 
 
 @set_command_handler('calc', pass_args=True, allow_edited=True)
@@ -63,20 +84,9 @@ def calculate(bot: telegram.Bot, update: telegram.Update, args):
             # on edited received
             message.reply_text(text)
 
-    calc_timeout = 1.
     if args:
         formula = ''.join(args)
-
-        with Manager() as manager:
-            result = manager.Value('s', " ")
-            process = Process(target=calculate_impl, args=(formula, result))
-            process.start()
-            process.join(calc_timeout)
-            if process.is_alive():
-                process.terminate()
-                send_message("Time Limit Exceeded")
-            else:
-                send_message(formula + '=' + result.value)
+        send_message(get_result(formula)[0])
     else:
         send_message("Usage: /calc <formula>. Currently, +-*/()^ operator is supported")
 
@@ -89,18 +99,7 @@ def inline_calc(bot, update):
 
     results = list()
     formula = query.replace(' ', '')
-    with Manager() as manager:
-        result = manager.Value('s', " ")
-        process = Process(target=calculate_impl, args=(formula, result))
-        process.start()
-        process.join(0.5)
-        if process.is_alive():
-            process.terminate()
-            result = "Time limit exceeded"
-            title = result
-        else:
-            title = "result"
-            result = formula + '=' + result.value
+    result, title = get_result(formula)
 
     results.append(
         InlineQueryResultArticle(
@@ -111,4 +110,3 @@ def inline_calc(bot, update):
     )
 
     bot.answer_inline_query(update.inline_query.id, results)
-
