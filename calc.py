@@ -6,10 +6,17 @@ op_weight['-'] = op_weight['+']
 op_weight['/'] = op_weight['*']
 
 
-def parse_word(s: str):
+def parse_word(s: str, idx=0):
+    """
+    parsing words from string s
+    :param s: string to be parsed
+    :param idx: the starting index number of exception position (like 0-index. 1-index)
+    :return: yield words that is parsed
+    """
+
     int_mode = True
     num_val = ""
-    for ch in s:
+    for i, ch in enumerate(s):
         # parse operator
         if ch in "+-*/()^":
             if num_val:
@@ -29,7 +36,7 @@ def parse_word(s: str):
         elif ch.isdigit():
             num_val += ch
         else:
-            raise ValueError("{} is not valid".format(ch))
+            raise ValueError("{}:\t'{}' is invalid".format(idx + i, ch))
     if num_val:
         yield Decimal(num_val)
 
@@ -106,3 +113,10 @@ if __name__ == "__main__":
     for i in range(100):
         calc("9999^9999")
     print("cost time:", time() - t1, 's')
+
+    print(calc("29/40*9"))
+
+    try:
+        calc("2;import os")
+    except Exception as e:
+        print(e)
