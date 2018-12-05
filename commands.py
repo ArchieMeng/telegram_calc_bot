@@ -1,3 +1,4 @@
+import decimal
 from multiprocessing import Process, Manager, Value
 import telegram
 from telegram.ext import CommandHandler
@@ -61,10 +62,10 @@ def get_result(formula):
         else:
             title = "result"
             if error.value:
-                result = result.value
+                result = str(result.value) # need string type to send back to users
             else:
                 result = formula + '=' + result.value
-    return result, title
+        return result, title
 
 
 @set_command_handler('calc', pass_args=True, allow_edited=True)
@@ -86,7 +87,8 @@ def calculate(bot: telegram.Bot, update: telegram.Update, args):
 
     if args:
         formula = ''.join(args)
-        send_message(get_result(formula)[0])
+        result, title = get_result(formula)
+        send_message(result)
     else:
         send_message("Usage: /calc <formula>. Currently, +-*/()^ operator is supported")
 
