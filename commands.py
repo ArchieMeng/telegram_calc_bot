@@ -60,11 +60,12 @@ def get_result(formula):
             result = "Time limit exceeded"
             title = result
         else:
-            title = "result"
             if error.value:
-                result = str(result.value) # need string type to send back to users
+                title = result = str(result.value)  # need string type to send back to users
             else:
+                title = result.value
                 result = formula + '=' + result.value
+
         return result, title
 
 
