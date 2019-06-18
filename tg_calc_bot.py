@@ -1,10 +1,10 @@
-from telegram.ext import Updater, Dispatcher, InlineQueryHandler
-import telegram
-import commands
-
-import os
 import logging
+import os
 
+import telegram
+from telegram.ext import Updater, InlineQueryHandler
+
+import commands
 
 file_path = os.path.dirname(__file__)
 logging.basicConfig(

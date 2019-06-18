@@ -6,7 +6,7 @@ op_weight['-'] = op_weight['+']
 op_weight['/'] = op_weight['*']
 
 
-def parse_word(s: str, idx=0):
+def parse_word(s: str, idx: int = 0):
     """
     parsing words from string s
     :param s: string to be parsed
@@ -56,12 +56,12 @@ def do_operate(a, b, op):
 
 def calc(command: str):
     if not command:
-        return None
+        return 0
     val_stack, op_stack = [], []
     for v in parse_word(command):
         if isinstance(v, Decimal):
             val_stack.append(v)
-        elif v in op_weight:
+        elif v in op_weight:  # v is an operator
             while op_stack and op_stack[-1] != '(' and op_weight[v] <= op_weight[op_stack[-1]]:
                 b, a = val_stack.pop(), val_stack.pop()
                 val_stack.append(do_operate(a, b, op_stack.pop()))
@@ -85,38 +85,9 @@ def calc(command: str):
 
 if __name__ == "__main__":
     print(op_weight)
-    print(*parse_word("1.23*23"))
-    print(*parse_word("(1.+2/.3)*4-0.1"))
-    try:
-        print(*parse_word("2^4/2*13.-.23."))
-    except Exception as e:
-        print(e.args[0])
-    print(calc("1+2-1+3-2-2"))
-    print(calc("1+2-1+3-(2-2)"))
-    try:
-        print(calc("2-3)"))
-    except Exception as e:
-        print(e.args[0])
-    print(calc(""))
-    print(calc("1*2/3"))
-    print(calc("1*2/3."))
-    print(calc("2^4/2"))
-    print(calc("2^(4/2)"))
-    print(calc("0.26*(80*24/10^3)"))
-    for d in range(5, 100, 5):
-        formulation = "0.{}*9".format(d)
-        print(formulation, '=', calc(formulation))
-
     from time import time
 
     t1 = time()
     for i in range(100):
         calc("9999^9999")
     print("cost time:", time() - t1, 's')
-
-    print(calc("29/40*9"))
-
-    try:
-        calc("2;import os")
-    except Exception as e:
-        print(e)
