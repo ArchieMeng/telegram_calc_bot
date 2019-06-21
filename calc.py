@@ -1,9 +1,14 @@
 from decimal import *
 
 getcontext().prec = 6 # float calculation precise
-op_weight = {op: i for i, op in enumerate("+-*/^")}
+op_weight = {op: i for i, op in enumerate("+-*/^")}  # the larger, the higher in priority
 op_weight['-'] = op_weight['+']
 op_weight['/'] = op_weight['*']
+op_weight['pos'] = op_weight['neg'] = max(op_weight.values()) + 1
+unary_operators = {
+    '-': "neg",
+    '+': "pos",
+}
 
 
 def parse_word(s: str, idx: int = 0):
@@ -14,11 +19,25 @@ def parse_word(s: str, idx: int = 0):
     :return: yield words that is parsed
     """
 
-    int_mode = True
+    int_mode = True  # reading int
     num_val = ""
+    operator_val = ""
     for i, ch in enumerate(s):
         # parse operator
-        if ch in "+-*/()^":
+        if any(op.startswith(operator_val + ch) for op in op_weight):  # prefix match
+            if num_val:
+                yield Decimal(num_val)
+                num_val = ""
+                int_mode = True
+                yield ch
+
+            else:  # parsing unary or other long operators
+                # Todo implement long operator. etc. "<=", "=="
+                if ch in unary_operators:
+                    yield unary_operators[ch]
+                else:
+                    yield ch
+        elif ch in '()':
             if num_val:
                 yield Decimal(num_val)
                 num_val = ""
@@ -29,7 +48,7 @@ def parse_word(s: str, idx: int = 0):
             # validation
             if not int_mode:
                 raise ValueError("{} is not a valid digit".format(num_val + '.'))
-            # turn int num into float
+            # turn int number into float
             else:
                 int_mode = False
                 num_val += '.'
@@ -41,7 +60,7 @@ def parse_word(s: str, idx: int = 0):
         yield Decimal(num_val)
 
 
-def do_operate(a, b, op):
+def do_operate(op, a, b):
     if op == "+":
         return a + b
     elif op == "-":
@@ -52,6 +71,12 @@ def do_operate(a, b, op):
         return a / b
     elif op == "^":
         return a ** b
+    elif op == "pos":
+        return a
+    elif op == "neg":
+        return -a
+    else:
+        raise ValueError("operator '{}' not found".format(op))
 
 
 def calc(command: str):
@@ -62,24 +87,36 @@ def calc(command: str):
         if isinstance(v, Decimal):
             val_stack.append(v)
         elif v in op_weight:  # v is an operator
-            while op_stack and op_stack[-1] != '(' and op_weight[v] <= op_weight[op_stack[-1]]:
-                b, a = val_stack.pop(), val_stack.pop()
-                val_stack.append(do_operate(a, b, op_stack.pop()))
+            while (op_stack
+                   and op_stack[-1] != '('
+                   and op_weight[v] <= op_weight[op_stack[-1]]):
+
+                if op_stack[-1] in unary_operators.values():
+                    a, b = val_stack.pop(), 0
+                else:
+                    b, a = val_stack.pop(), val_stack.pop()
+                val_stack.append(do_operate(op_stack.pop(), a, b))
             op_stack.append(v)
         elif v in "()":
             if v == '(':
                 op_stack.append(v)
             else:
                 while op_stack and op_stack[-1] != '(':
-                    b, a = val_stack.pop(), val_stack.pop()
-                    val_stack.append(do_operate(a, b, op_stack.pop()))
+                    if op_stack[-1] in unary_operators.values():
+                        a, b = val_stack.pop(), 0
+                    else:
+                        b, a = val_stack.pop(), val_stack.pop()
+                    val_stack.append(do_operate(op_stack.pop(), a, b))
                 if op_stack:
                     op_stack.pop()
                 else:
                     raise ValueError("No corresponding '(' on the left")
     while op_stack:
-        b, a = val_stack.pop(), val_stack.pop()
-        val_stack.append(do_operate(a, b, op_stack.pop()))
+        if op_stack[-1] in unary_operators.values():
+            a, b = val_stack.pop(), 0
+        else:
+            b, a = val_stack.pop(), val_stack.pop()
+        val_stack.append(do_operate(op_stack.pop(), a, b))
     return val_stack[0]
 
 
