@@ -91,7 +91,7 @@ def calculate(bot: telegram.Bot, update: telegram.Update, args):
         result, title = get_result(formula)
         send_message(result)
     else:
-        send_message("Usage: /calc <formula>. Currently, +-*/()^ operator is supported")
+        send_message("Usage: /calc <formula>. Currently, +-*/()^ operators are supported")
 
 
 @run_async

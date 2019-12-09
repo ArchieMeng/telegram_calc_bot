@@ -32,7 +32,6 @@ def parse_word(s: str, idx: int = 0):
                 yield ch
 
             else:  # parsing unary or other long operators
-                # Todo implement long operator. etc. "<=", "=="
                 if ch in unary_operators:
                     yield unary_operators[ch]
                 else:
