@@ -20,14 +20,17 @@ def parse_word(s: str, idx: int = 0):
     """
 
     int_mode = True  # reading int
-    num_val = ""
+    num_val = ""  # the value of parsed number
+    value_parsed = False  # whether a number is parsed or not
     operator_val = ""
     for i, ch in enumerate(s):
         # parse operator
         if any(op.startswith(operator_val + ch) for op in op_weight):  # prefix match
-            if num_val:
-                yield Decimal(num_val)
+            if value_parsed:
+                if num_val:
+                    yield Decimal(num_val)
                 num_val = ""
+                value_parsed = False
                 int_mode = True
                 yield ch
 
@@ -37,9 +40,12 @@ def parse_word(s: str, idx: int = 0):
                 else:
                     yield ch
         elif ch in '()':
-            if num_val:
-                yield Decimal(num_val)
+            if value_parsed:
+                if num_val:
+                    yield Decimal(num_val)
                 num_val = ""
+                if ch == '(':
+                    value_parsed = False
                 int_mode = True
             yield ch
         # parse dot
@@ -52,6 +58,7 @@ def parse_word(s: str, idx: int = 0):
                 int_mode = False
                 num_val += '.'
         elif ch.isdigit():
+            value_parsed = True
             num_val += ch
         else:
             raise ValueError("{}:\t'{}' is invalid".format(idx + i, ch))
