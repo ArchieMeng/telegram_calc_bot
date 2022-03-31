@@ -21,6 +21,7 @@ def test_parse_words():
         Decimal("0.1")
     )
 
+
 def test_errors():
     try:
         print(*parse_word("2^4/2*13.-.23."))
@@ -41,6 +42,11 @@ def test_errors():
         assert e.args[0] == "{}:\t'{}' is invalid".format(1, ';')
 
 
+def test_calc_fractions():
+    assert calc("1/3*3") == Decimal(1)
+    assert calc("1/3+1/3+1/3") == Decimal(1)
+
+
 def test_calc_without_power():
     for d in range(5, 100, 5):
         formulation = "0.{}*9".format(d)
@@ -56,7 +62,7 @@ def test_calc_without_power():
     assert calc(".314*4") == Decimal(".314") * Decimal("4")
     assert calc("(1+3)-2") == Decimal("2")
     assert calc("2*(1-3)-2") == Decimal("-6")
-    assert calc("2*(22/7)*4+3.1415926") == Decimal("28.2845")
+    assert calc("2*(22/7)*4+3.1415926") == Decimal(2) * Decimal(22) / Decimal(7) * Decimal(4) + Decimal("3.1415926")
     assert calc("2*(1.5*2+4)+6") == Decimal("20")
 
 

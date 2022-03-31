@@ -1,4 +1,5 @@
 from decimal import *
+from fractions import Fraction
 
 getcontext().prec = 6 # float calculation precise
 op_weight = {op: i for i, op in enumerate("+-*/^")}  # the larger, the higher in priority
@@ -9,6 +10,18 @@ unary_operators = {
     '-': "neg",
     '+': "pos",
 }
+
+
+def f2d(n):
+    """
+    Fraction to Decimal convertion
+    :param n: a Number
+    :return: Decimal
+    """
+    if isinstance(n, Fraction):
+        return Decimal(n.numerator) / Decimal(n.denominator)
+    else:
+        return Decimal(n)
 
 
 def parse_word(s: str, idx: int = 0):
@@ -42,7 +55,7 @@ def parse_word(s: str, idx: int = 0):
         elif ch in '()':
             if value_parsed:
                 if num_val:
-                    yield Decimal(num_val)
+                    yield Fraction(num_val)
                 num_val = ""
                 if ch == '(':
                     value_parsed = False
@@ -67,6 +80,10 @@ def parse_word(s: str, idx: int = 0):
 
 
 def do_operate(op, a, b):
+    # operation between Decimal and Fraction is not allowed
+    if type(a) != type(b):
+        a, b = Fraction(a), Fraction(b)
+
     if op == "+":
         return a + b
     elif op == "-":
@@ -74,7 +91,8 @@ def do_operate(op, a, b):
     elif op == "*":
         return a * b
     elif op == "/":
-        return a / b
+        a, b = Fraction(a), Fraction(b)
+        return Fraction(a, b)
     elif op == "^":
         return a ** b
     elif op == "pos":
@@ -90,7 +108,7 @@ def calc(command: str):
         return 0
     val_stack, op_stack = [], []
     for v in parse_word(command):
-        if isinstance(v, Decimal):
+        if isinstance(v, (Decimal, Fraction)):
             val_stack.append(v)
         elif v in op_weight:  # v is an operator
             while (op_stack
@@ -123,7 +141,8 @@ def calc(command: str):
         else:
             b, a = val_stack.pop(), val_stack.pop()
         val_stack.append(do_operate(op_stack.pop(), a, b))
-    return val_stack[0]
+    ans = val_stack[0]
+    return f2d(ans)
 
 
 if __name__ == "__main__":
